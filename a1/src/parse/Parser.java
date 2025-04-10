@@ -567,12 +567,27 @@ public class Parser {
                      * Non-standard recovery set includes EQUALS because a
                      * common syntax error is to use EQUALS instead of ASSIGN.
                      */
+
+                    /* Single Assign Logic */
                     ExpNode left = parseLValue(
                             recoverSet.union(Token.ASSIGN, Token.EQUALS));
                     Location loc = tokens.getLocation();
                     tokens.match(Token.ASSIGN, CONDITION_START_SET);
-                    ExpNode right = parseCondition(recoverSet);
-                    return new StatementNode.AssignmentNode(loc, left, right);
+                    ExpNode right = parseCondition(recoverSet.union(Token.BAR));
+
+                    /* Collect multiple single assigns */
+                    List<StatementNode.SingleAssignNode> assignment_list = new ArrayList<>();
+                    assignment_list.add(new StatementNode.SingleAssignNode(loc, left, right));
+
+                    while (tokens.isMatch(Token.BAR)) { /* After each BAR aka [brick] | [brick] */
+                        tokens.match(Token.BAR);
+                        left = parseLValue(recoverSet.union(Token.ASSIGN, Token.EQUALS));
+                        loc = tokens.getLocation();
+                        tokens.match(Token.ASSIGN, CONDITION_START_SET);
+                        right = parseCondition(recoverSet.union(Token.BAR));
+                        assignment_list.add(new StatementNode.SingleAssignNode(loc, left, right));
+                    }
+                    return new StatementNode.AssignmentNode(assignment_list);
                 });
     }
 

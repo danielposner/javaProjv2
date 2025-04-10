@@ -117,24 +117,25 @@ public class StaticChecker implements DeclVisitor, StatementVisitor,
      * Assignment statement node
      */
     public void visitAssignmentNode(StatementNode.AssignmentNode node) {
+
         beginCheck("Assignment");
-        // Check the left side left value.
-        ExpNode left = node.getLValue().transform(this);
-        node.setLValue(left);
-        // Check the right side expression.
-        ExpNode exp = node.getExp().transform(this);
-        node.setExp(exp);
-        // Validate that it is a true left value and not a constant
-        if (left.getType() instanceof Type.ReferenceType leftType) {
-            /* Validate that the right side expression is assignment
-             * compatible with the left value. This requires that the
-             * right side expression is coerced to the base type of the
-             * type of the left side LValue. */
-            Type baseType = leftType.getBaseType();
-            node.setExp(baseType.coerceExp(exp));
-        } else if (left.getType() != Type.ERROR_TYPE) {
-                staticError("reference type expected", left.getLocation());
+        /* Swap to a list */
+        for (StatementNode.SingleAssignNode assign_single : node.getAssignments()) {
+            ExpNode left = assign_single.getLValue().transform(this);
+            ExpNode right = assign_single.getExp().transform(this);
+
+            // Check it's a reference (like before)
+            if (left.getType() instanceof Type.ReferenceType refType) {
+                right = refType.getBaseType().coerceExp(right);
+            } else if (left.getType() != Type.ERROR_TYPE) {
+                staticError("Reference type expected", left.getLocation());
+            }
+
+            // Replace the updated nodes
+            assign_single.setLValue(left);
+            assign_single.setExp(right);
         }
+
         endCheck("Assignment");
     }
 

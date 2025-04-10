@@ -139,20 +139,36 @@ public abstract class StatementNode {
      * Tree node representing an assignment statement.
      */
     public static class AssignmentNode extends StatementNode {
-        /**
-         * Tree node for expression on left hand side of an assignment.
-         */
-        private ExpNode lValue;
-        /**
-         * Tree node for the expression on the right hand side of an assignment.
-         * (The value to be assigned.)
-         */
-        private ExpNode exp;
+        /* Now its a list of single assignments 1+ */
+        private final List<SingleAssignNode> assignments;
 
-        public AssignmentNode(Location loc, ExpNode lValue, ExpNode exp) {
-            super(loc);
-            this.lValue = lValue;
-            this.exp = exp;
+
+
+        public ExpNode getLValue() {
+            return isSingle() ? assignments.get(0).getLValue() : null;
+        }
+
+
+        public AssignmentNode(List<SingleAssignNode> assignments) {
+            super(assignments.get(0).getLocation());
+            this.assignments = assignments;
+        }
+
+        // ✅ Preserves support for single assignment
+        public ExpNode getVariable() {
+            return isSingle() ? assignments.get(0).getLValue() : null;
+        }
+
+        public ExpNode getExp() {
+            return isSingle() ? assignments.get(0).getExp() : null;
+        }
+
+        public boolean isSingle() {
+            return assignments.size() == 1;
+        }
+
+        public List<SingleAssignNode> getAssignments() {
+            return assignments;
         }
 
         @Override
@@ -160,36 +176,21 @@ public abstract class StatementNode {
             visitor.visitAssignmentNode(this);
         }
 
-        public ExpNode getLValue() {
-            return lValue;
-        }
-
-        public void setLValue(ExpNode variable) {
-            this.lValue = variable;
-        }
-
-        public ExpNode getExp() {
-            return exp;
-        }
-
-        public void setExp(ExpNode exp) {
-            this.exp = exp;
-        }
-
-        String getVariableName() {
-            if (lValue instanceof ExpNode.VariableNode variableNode) {
-                return variableNode.getVariable().getIdent();
-            } else {
-                return null;
-            }
-        }
-
         @Override
         public String toString(int level) {
-            return lValue.toString() + " := " + exp.toString();
+            StringBuilder sb = new StringBuilder();
+            String sep = "";
+            for (SingleAssignNode assign : assignments) {
+                sb.append(sep).append(assign.toString());
+                sep = " | ";
+            }
+            return sb.toString();
         }
     }
 
+    /**
+     * Tree node representing a "read" statement.
+     */
     /**
      * Tree node representing a "read" statement.
      */
@@ -400,5 +401,46 @@ public abstract class StatementNode {
                     newLine(level + 1) + loopStmt.toString(level + 1);
         }
     }
+
+    /* Single Assign Node */
+    public static class SingleAssignNode {
+        private final Location loc;
+        private ExpNode lValue;
+        private ExpNode exp;
+
+        public SingleAssignNode(Location loc, ExpNode lValue, ExpNode exp) {
+            this.loc = loc;
+            this.lValue = lValue;
+            this.exp = exp;
+        }
+
+        /* Add getters and setters */
+
+        public Location getLocation() {
+            return loc;
+        }
+
+        public ExpNode getLValue() {
+            return lValue;
+        }
+
+        public void setLValue(ExpNode lValue) {
+            this.lValue = lValue;
+        }
+
+        public ExpNode getExp() {
+            return exp;
+        }
+
+        public void setExp(ExpNode exp) {
+            this.exp = exp;
+        }
+
+        @Override
+        public String toString() {
+            return lValue.toString() + " := " + exp.toString();
+        }
+    }
+
 }
 
