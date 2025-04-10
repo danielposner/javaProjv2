@@ -45,7 +45,9 @@ import java_cup.runtime.ComplexSymbolFactory.Location;
  * StatementList -> Statement { SEMICOLON Statement }
  * Statement -> WhileStatement | IfStatement | CallStatement | Assignment |
  *          ReadStatement | WriteStatement | CompoundStatement
- * Assignment -> LValue ASSIGN Condition
+ * Assignment -> SingleAssign {BAR SingleAssign}
+ * Lvalue -> IDENTIFIER | IfExp
+ * SingleAssign -> LValue Assign Condition
  * WhileStatement -> KW_WHILE Condition KW_DO Statement
  * IfStatement -> KW_IF Condition KW_THEN Statement KW_ELSE Statement
  * CallStatement -> KW_CALL IDENTIFIER LPAREN ActualParameters RPAREN
@@ -56,6 +58,8 @@ import java_cup.runtime.ComplexSymbolFactory.Location;
  * RelCondition -> Exp [ RelOp Exp ]
  * RelOp   -> EQUALS | NEQUALS | LEQUALS | LESS | GREATER | GEQUALS
  * Exp     -> [ PLUS | MINUS ] Term   { ( PLUS | MINUS ) Term }
+ * IfExp   -> KW_IFE IfExpBranch {Separator IfExpBranch} KW_FI
+ * IfExpBranch -> Condition KW_THEN Condition
  * Term    -> Factor { ( TIMES | DIVIDE ) Factor }
  * Factor  -> LPAREN Condition RPAREN | NUMBER | LValue
  * LValue -> IDENTIFIER
